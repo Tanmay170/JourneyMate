@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { signInWithPopup, signInWithEmailAndPassword } from "firebase/auth"
 import { auth, googleProvider } from "@/lib/firebase"
+import { startSession, postLoginPath } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -21,9 +22,11 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, email, password)
+      const cred = await signInWithEmailAndPassword(auth, email, password)
+      await startSession(cred.user)
       toast.success("Successfully logged in!")
-      router.push("/dashboard")
+      router.push(postLoginPath())
+      router.refresh()
     } catch (error: any) {
       toast.error(error.message || "Failed to login")
     } finally {
@@ -33,9 +36,11 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider)
+      const cred = await signInWithPopup(auth, googleProvider)
+      await startSession(cred.user)
       toast.success("Successfully logged in with Google!")
-      router.push("/dashboard")
+      router.push(postLoginPath())
+      router.refresh()
     } catch (error: any) {
       toast.error(error.message || "Failed to login with Google")
     }

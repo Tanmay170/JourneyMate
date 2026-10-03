@@ -1,32 +1,24 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { onAuthStateChanged, signOut, User } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { useSession } from "next-auth/react"
+import { endSession } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { LogOut, User as UserIcon } from "lucide-react"
 
 export function AuthButtons() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data: session, status } = useSession()
+  const user = session?.user
   const router = useRouter()
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser)
-      setLoading(false)
-    })
-    return () => unsubscribe()
-  }, [])
-
   const handleLogout = async () => {
-    await signOut(auth)
+    await endSession()
     router.push("/")
+    router.refresh()
   }
 
-  if (loading) return <div className="w-32 h-9 animate-pulse bg-white/10 rounded-md"></div>
+  if (status === "loading") return <div className="w-32 h-9 animate-pulse bg-white/10 rounded-md"></div>
 
   if (user) {
     return (
@@ -35,7 +27,7 @@ export function AuthButtons() {
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 text-primary">
             <UserIcon className="h-4 w-4" />
           </div>
-          <span className="hidden md:inline-block">{user.displayName || user.email?.split("@")[0]}</span>
+          <span className="hidden md:inline-block">{user.name || user.email?.split("@")[0]}</span>
         </div>
         <Link href="/dashboard">
           <Button variant="outline" size="sm" className="glass">Dashboard</Button>

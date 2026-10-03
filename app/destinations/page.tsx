@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DestinationCard } from "@/components/destination-card"
-import type { Destination } from "@/lib/db"
+import type { Destination } from "@/types/destination"
 
 function DestinationsContent() {
   const searchParams = useSearchParams()

@@ -5,6 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { createUserWithEmailAndPassword, signInWithPopup, updateProfile } from "firebase/auth"
 import { auth, googleProvider } from "@/lib/firebase"
+import { startSession } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -24,10 +25,10 @@ export default function SignupPage() {
     try {
       const userCred = await createUserWithEmailAndPassword(auth, email, password)
       await updateProfile(userCred.user, { displayName: name })
-      
-      // We will create the user in MongoDB later via an API, but for now Firebase auth is complete
+      await startSession(userCred.user)
       toast.success("Account created successfully!")
       router.push("/dashboard")
+      router.refresh()
     } catch (error: any) {
       toast.error(error.message || "Failed to create account")
     } finally {
@@ -37,9 +38,11 @@ export default function SignupPage() {
 
   const handleGoogleSignup = async () => {
     try {
-      await signInWithPopup(auth, googleProvider)
+      const cred = await signInWithPopup(auth, googleProvider)
+      await startSession(cred.user)
       toast.success("Account created with Google!")
       router.push("/dashboard")
+      router.refresh()
     } catch (error: any) {
       toast.error(error.message || "Failed to signup with Google")
     }
