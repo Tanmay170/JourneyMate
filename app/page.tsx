@@ -8,7 +8,6 @@ import { HomeSearch } from "@/components/home-search"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { DestinationCard } from "@/components/destination-card"
 import { FeaturedDestination } from "@/components/featured-destination"
-import { UserAuthForm } from "@/components/user-auth-form"
 import dbConnect from "@/lib/mongodb"
 import Destination from "@/models/Destination"
 
@@ -39,6 +38,7 @@ export default async function HomePage() {
             <Link href="/stays" className="text-sm font-medium hover:text-primary">Stays</Link>
             <Link href="/food" className="text-sm font-medium hover:text-primary">Food</Link>
             <Link href="/itinerary" className="text-sm font-medium hover:text-primary">Itinerary Planner</Link>
+            <Link href="/chat" className="text-sm font-medium hover:text-primary">Assistant</Link>
             <Link href="/transport" className="text-sm font-medium hover:text-primary">Transport</Link>
           </div>
           <AuthButtons />

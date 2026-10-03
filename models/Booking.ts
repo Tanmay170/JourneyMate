@@ -11,6 +11,14 @@ const BookingSchema = new mongoose.Schema({
     ref: 'Destination',
     required: true,
   },
+  destinationSlug: {
+    type: String,
+    required: true,
+  },
+  destinationName: {
+    type: String,
+    required: true,
+  },
   stayName: {
     type: String,
     required: true,

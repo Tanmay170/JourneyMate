@@ -7,16 +7,22 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { getDestinationBySlug } from "@/lib/db"
+import dbConnect from "@/lib/mongodb"
+import DestinationModel from "@/models/Destination"
+import type { Destination } from "@/types/destination"
 import { BookingModal } from "@/components/booking-modal"
 import { ReviewForm } from "@/components/review-form"
 import { LiveStays } from "@/components/live-stays"
 import { LiveFood } from "@/components/live-food"
 import { AuthButtons } from "@/components/auth-buttons"
+import { SaveButton } from "@/components/save-button"
 
 export default async function DestinationPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
-  const destination = await getDestinationBySlug(slug)
+  await dbConnect()
+  const doc = await DestinationModel.findOne({ slug }).lean()
+  // Serialise ObjectIds/dates so the data can be passed to client components
+  const destination: (Destination & { id?: string }) | null = doc ? JSON.parse(JSON.stringify(doc)) : null
   
   if (!destination) {
     notFound()
@@ -65,6 +71,9 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               <div className="mt-2 flex items-center gap-2 text-white">
                 <MapPin className="h-4 w-4" />
                 <span>{destination.location}</span>
+              </div>
+              <div className="mt-4">
+                <SaveButton slug={destination.slug} />
               </div>
             </div>
           </div>
@@ -260,7 +269,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                     <div className="flex items-center justify-between">
                       <h2 className="text-2xl font-bold">Traveler Reviews</h2>
                     </div>
-                    <ReviewForm destinationId={destination.id || destination._id || ""} />
+                    <ReviewForm slug={destination.slug} />
                     <div className="mt-6 grid gap-6">
                       {destination.reviews.map((review, index) => (
                         <Card key={index}>

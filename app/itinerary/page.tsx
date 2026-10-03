@@ -3,40 +3,24 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { Sparkles, MapPin, Loader2, Calendar, Coffee, BedDouble, Navigation, Camera } from "lucide-react"
+import { Sparkles, MapPin, Loader2, Bookmark, Calendar, Coffee, BedDouble, Navigation, Camera } from "lucide-react"
 import { experimental_useObject as useObject } from "@ai-sdk/react"
-import { z } from "zod"
+import { toast } from "sonner"
+import { useSession } from "next-auth/react"
+import { itinerarySchema } from "@/lib/itinerary-schema"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-const itinerarySchema = z.object({
-  tripTitle: z.string(),
-  tripSummary: z.string(),
-  days: z.array(z.object({
-    dayNumber: z.number(),
-    theme: z.string(),
-    activities: z.array(z.object({
-      time: z.string(),
-      title: z.string(),
-      description: z.string(),
-      type: z.enum(["Activity", "Food", "Travel", "Stay", "Relaxation"])
-    }))
-  })),
-  recommendedStays: z.array(z.object({
-    name: z.string(),
-    description: z.string(),
-    priceRange: z.string()
-  })).optional(),
-  localFoodSpecialties: z.array(z.string()).optional()
-})
-
-type Itinerary = z.infer<typeof itinerarySchema>
 
 export default function ItineraryPage() {
   const [prompt, setPrompt] = useState("")
+  const [submittedPrompt, setSubmittedPrompt] = useState("")
+  const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const { status } = useSession()
   
   const { submit, object, isLoading, error } = useObject({
     api: '/api/generate-itinerary',
@@ -46,7 +30,33 @@ export default function ItineraryPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!prompt.trim()) return
-    submit({ prompt })
+    setSaved(false)
+    setSubmittedPrompt(prompt.trim())
+    submit({ prompt: prompt.trim() })
+  }
+
+  const handleSave = async () => {
+    const parsed = itinerarySchema.safeParse(object)
+    if (!parsed.success) {
+      toast.error("Wait for the itinerary to finish generating")
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch("/api/itineraries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: submittedPrompt, plan: parsed.data }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || "Failed to save itinerary")
+      setSaved(true)
+      toast.success("Saved to your dashboard")
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save itinerary")
+    } finally {
+      setSaving(false)
+    }
   }
 
   const getActivityIcon = (type: string | undefined) => {
@@ -118,7 +128,14 @@ export default function ItineraryPage() {
 
           {error && (
             <Card className="bg-destructive/10 border-destructive/20 text-destructive p-4">
-              <p>Failed to generate itinerary. {error.message}</p>
+              <p>
+                {status === "unauthenticated"
+                  ? "Please log in to generate an itinerary."
+                  : "We couldn't generate your itinerary. Please try again in a moment."}
+              </p>
+              {status === "unauthenticated" && (
+                <Link href="/login?callbackUrl=/itinerary" className="underline text-sm">Log in</Link>
+              )}
             </Card>
           )}
 
@@ -128,6 +145,14 @@ export default function ItineraryPage() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
+              {!isLoading && status === "authenticated" && (
+                <div className="flex justify-end">
+                  <Button variant="secondary" onClick={handleSave} disabled={saving || saved}>
+                    <Bookmark className="h-4 w-4 mr-2" />
+                    {saved ? "Saved" : saving ? "Saving..." : "Save itinerary"}
+                  </Button>
+                </div>
+              )}
               <Card className="glass border-primary/20 overflow-hidden relative">
                 {isLoading && (
                   <div className="absolute top-0 left-0 w-full h-1 bg-primary/20 overflow-hidden">
@@ -219,7 +244,7 @@ export default function ItineraryPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
-                      {object?.localFoodSpecialties?.map((food: string, idx: number) => (
+                      {object?.localFoodSpecialties?.filter((f): f is string => !!f).map((food, idx) => (
                         <span key={idx} className="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-lg text-sm font-medium">
                           {food}
                         </span>

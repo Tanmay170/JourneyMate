@@ -49,6 +49,11 @@ const getCategory = (place: string) => {
 };
 
 export async function GET() {
+  // Destructive (wipes all destinations): development only.
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: "Not available in production" }, { status: 403 })
+  }
+
   try {
     await dbConnect()
     await Destination.deleteMany({})

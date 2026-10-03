@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const manropeHeading = Manrope({subsets:['latin'],variable:'--font-heading'});
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+const manrope = Manrope({subsets:['latin'],variable:'--font-sans'});
 
 const outfit = Outfit({ subsets: ['latin'] })
 
@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={cn("dark", "font-sans", inter.variable, manropeHeading.variable)}>
+    <html lang="en" className={cn("dark", "font-sans", manrope.variable, manropeHeading.variable)}>
       <body className={outfit.className}>
         <Providers>
           <TransitionProvider>{children}</TransitionProvider>

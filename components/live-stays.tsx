@@ -58,7 +58,7 @@ export function LiveStays({ destinationSlug, destinationName }: { destinationSlu
                 <span>Contact: {stay.contact}</span>
               </div>
               <div className="mt-4 pt-4 border-t border-border flex justify-end">
-                <BookingModal stayName={stay.name} stayPrice={stay.priceRange} destinationName={destinationName} />
+                <BookingModal stayName={stay.name} stayPrice={stay.priceRange} destinationName={destinationName} destinationSlug={destinationSlug} />
               </div>
             </div>
           </CardContent>
